@@ -1,3 +1,26 @@
+def check_entries_rugby(values) -> (bool, str):
+    tries, conversions = values[0], values[1]
+    retry, error = False, None
+
+    if conversions > tries:
+        error = f'{conversions} conversions pour {tries} essais/touchdowns: Nombres non valides'
+        retry = True
+
+    return retry, error
+
+
+def check_entries_amf(values) -> (bool, str):
+    return check_entries_rugby([values[0], values[1] + values[2]])
+
+
+def convert_entries_sports(value) -> int:
+    converted = int(float(value))
+    if not 0 <= converted < 1000:
+        raise ValueError(f'{value} n\'est pas adapté pour du sport :p')
+
+    return converted
+
+
 def get_score(scored, scoring_values) -> int:
     return sum(max(0, scored[i]) * scoring_values[i] for i in range(len(scored)))
 
@@ -27,24 +50,32 @@ commands = {
             'xv': {
                     'name': 'Score de rugby à XV',
                     'function': rugby_xv,
+                    'convert': convert_entries_sports,
+                    'opt_proc': check_entries_rugby,
                     'arg_keys': ('essais', 'transformations', 'pénalités', 'drops')
                 },
 
             'xiii': {
                     'name': 'Score de rugby à XIII',
                     'function': rugby_xiii,
+                    'convert': convert_entries_sports,
+                    'opt_proc': check_entries_rugby,
                     'arg_keys': ('essais', 'transformations', 'pénalités', 'drops')
                 },
 
             'amf': {
                     'name': 'Score de football américain',
                     'function': american_football,
+                    'convert': convert_entries_sports,
+                    'opt_proc': check_entries_amf,
                     'arg_keys': ('touchdowns', 'extra-points', '2pts-conversions', 'field goals', 'safeties')
                 },
 
             'bsk': {
                     'name': 'Score de Basketball',
                     'function': basketball,
+                    'convert': convert_entries_sports,
+                    'opt_proc': None,
                     'arg_keys': ('paniers à 2pts', 'paniers à 3pts', 'lancers-francs')
                 },
 
