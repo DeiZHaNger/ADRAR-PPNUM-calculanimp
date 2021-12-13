@@ -16,36 +16,6 @@ def get_error_message(msg, except_label) -> str:
     return f"{ERROR_STR_ID}{msg} {str(except_label).split(' (')[0]}"
 
 
-def get_from_command(value_lst, cmd, convert) -> bool:
-    got = False
-    if not cmd:
-        return got
-
-    value, msg, _ = process_input(cmd[0])
-
-    try:
-        if str(msg).find(ERROR_STR_ID) != -1:
-            raise NameError(msg)
-        if msg == '$h':
-            raise CalledHelp
-
-        value = convert(value)
-        value_lst.append(value)
-        got = True
-    except CalledHelp:
-        pass
-    except NameError as e:
-        print(e)
-    except ValueError as e:
-        print(get_error_message('Warning:', e))
-    except TypeError as e:
-        print(get_error_message('Warning:', e))
-
-    del cmd[0]
-
-    return got
-
-
 def get_entries(to_get_list, cmd, convert=None, straight_from_input=False) -> list:
     global path
     path.append(cmd.pop(0))
@@ -56,33 +26,39 @@ def get_entries(to_get_list, cmd, convert=None, straight_from_input=False) -> li
     values = []
 
     for key in to_get_list:
-        if straight_from_input or not get_from_command(values, cmd, convert):
-            while True:
-                try:
+        straight = straight_from_input
+        while True:
+            try:
+                if not straight and cmd:
+                    raw, msg, _ = process_input(cmd[0])
+                    del cmd[0]
+                    straight = True
+                else:
                     raw, msg, _ = process_input(input(f'{path_str}>{key.capitalize()}> '))
-                    if str(msg).find(ERROR_STR_ID) != -1:
-                        raise NameError(msg)
-                    if msg == '$h':
-                        raise CalledHelp
 
-                    entry = convert(raw)
-                    values.append(entry)
-                    break
-                except CalledHelp:
-                    pass
-                except NameError as e:
-                    print(e)
-                except ValueError as e:
-                    print(get_error_message('Warning:', e))
-                except TypeError as e:
-                    print(get_error_message('Warning:', e))
+                if str(msg).find(ERROR_STR_ID) != -1:
+                    raise NameError(msg)
+                if msg == '$h':
+                    raise CalledHelp
+
+                entry = convert(raw)
+                values.append(entry)
+                break
+            except CalledHelp:
+                pass
+            except NameError as e:
+                print(e)
+            except ValueError as e:
+                print(get_error_message('Warning:', e))
+            except TypeError as e:
+                print(get_error_message('Warning:', e))
 
     del path[-1]
 
     return values
 
 
-def process_command(cmd) -> tuple:
+def process_command(cmd) -> tuple[any, str, bool]:
     c = cmd[0]
     if c not in operators.keys():
         return None, get_error_message(f'${c}', 'Commande non valide'), False
@@ -114,7 +90,7 @@ def process_command(cmd) -> tuple:
     return rslt, ' '.join((f'${c}', ' '.join(map(str, cmd_args)))).rstrip(), to_cache
 
 
-def process_input(string) -> tuple:
+def process_input(string) -> tuple[any, str, bool]:
     if string.startswith('$'):
         rslt, cmd, to_cache = process_command(string.lstrip('$').split())
 
@@ -147,7 +123,7 @@ def process_input(string) -> tuple:
 # Operators Dictionary
 
 
-def display_operators_list(*_args) -> None:
+def display_operators_list(*_args) -> str:
     doc = '\n'
     for key in operators.keys():
         op = operators[key]
