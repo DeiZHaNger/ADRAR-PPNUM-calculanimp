@@ -1,3 +1,56 @@
+import functools
+# ----------------------------------------------------------------------------------------------------------------------
+# Maths
+
+
+def combination(kn) -> int:
+    k = kn[0]
+    n = kn[1]
+
+    return int(factorial([n]) / factorial([k]) / factorial([n - k]))
+
+
+def arrangements(kn) -> int:
+    k = kn[0]
+    n = kn[1]
+
+    return int(factorial([n]) / factorial([n - k]))
+
+
+def factorial(n) -> int:
+    p = 1
+    for i in range(n[0]):
+        p *= i + 1
+    return p
+
+
+# @functools.lru_cache(1028)
+# def linear_recurrence(args) -> float:
+#     n = args[0]
+#     init_values = args[1]
+#     parameters = args[2]
+#
+#     order = len(init_values)
+#     len_diff = len(parameters) - order
+#
+#     if len_diff > 0:
+#         for i in range(len_diff):
+#             init_values.append(0)
+#     if len_diff < 0:
+#         for i in range(len_diff):
+#             parameters.append(1)
+#
+#     if n < order:
+#         return init_values[n]
+#
+#     n_rank_value = sum(linear_recurrence(n - i) * parameters[(n - i) % order] for i in range(order, 0, -1))
+#
+#     return n_rank_value
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Sports
+
 def check_entries_rugby(values) -> tuple[bool, str]:
     tries, conversions = values[0], values[1]
     retry, error = False, None
@@ -45,6 +98,9 @@ def basketball(scored_nbs) -> int:
     return get_score(scored_nbs, scoring_values)
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+# Dictonary
+
 commands = {
 
             'xv': {
@@ -79,13 +135,44 @@ commands = {
                     'arg_keys': ('paniers à 2pts', 'paniers à 3pts', 'lancers-francs')
                 },
 
-            # not implemented '!': 'factorial',
+            '!': {
+                    'name': 'Factorielle',
+                    'function': factorial,
+                    'convert': int,
+                    'opt_proc': None,
+                    'arg_keys': ('nombre entier',)
+                },
+
+            'comb': {
+                    'name': 'Combinaison de k dans n',
+                    'function': combination,
+                    'convert': int,
+                    'opt_proc': None,
+                    'arg_keys': ('entier k', 'entier n')
+                },
+
+            'arr': {
+                    'name': 'Arrangements de k dans n',
+                    'function': arrangements,
+                    'convert': int,
+                    'opt_proc': None,
+                    'arg_keys': ('entier k', 'entier n')
+                },
+
             # not implemented 'fib': 'fibonacci',
-            # not implemented 'lr': 'linear_recurrence',
+            'lr': {
+                    'name': 'Récurrence linéaire',
+                    'function': linear_recurrence,
+                    'convert': float,
+                    'opt_proc': None,
+                    'arg_keys': ('rang', 'valeurs initiales', 'coefficients')
+                },
             # not implemented 'enig': 'enigma',
             # not implemented 'cc': 'clear_cache',
             # not implemented 'gc': 'get_from_cache',
             }
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
 
