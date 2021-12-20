@@ -67,12 +67,18 @@ def process_command(cmd) -> tuple[any, str, bool]:
     c_func = operators[c]['function']
     c_conv = operators[c]['convert']
     c_proc = operators[c]['opt_proc']
+    c_set_optkeys = operators[c]['opt_keys']
+    c_optconv = operators[c]['opt_conv']
 
     if c_keys is not None:
         values = []
 
         while not values:
             values = get_entries(c_keys, cmd, c_conv)
+            if c_set_optkeys is not None:
+                cmd.insert(0, c)
+                conv = c_optconv if c_optconv is not None else c_conv
+                values.extend(get_entries(c_set_optkeys(values), cmd, conv))
             if c_proc is not None:
                 retry, error = c_proc(values)
                 if retry:
@@ -139,14 +145,18 @@ operators['\\'] = {
                     'function': sys.exit,
                     'convert': None,
                     'opt_proc': None,
-                    'arg_keys': None
+                    'arg_keys': None,
+                    'opt_keys': None,
+                    'opt_conv': None
                     }
 operators['h'] = {
                     'name': 'Aide',
                     'function': display_operators_list,
                     'convert': None,
                     'opt_proc': None,
-                    'arg_keys': None
+                    'arg_keys': None,
+                    'opt_keys': None,
+                    'opt_conv': None
                     }
 
 # ----------------------------------------------------------------------------------------------------------------------
