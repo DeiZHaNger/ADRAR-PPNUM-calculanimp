@@ -1,7 +1,8 @@
 import sys
 import re
-import nimperators as nimp
 from typing import Union
+import nimperators as nimp
+
 
 ERROR_STR_ID = '>>!!'
 
@@ -102,8 +103,7 @@ def process_command(cmd) -> tuple[any, str, bool]:
 
             if c_set_optkeys is not None:
                 cmd.insert(0, c)
-                conv = c_optconv if c_optconv is not None else c_conv
-                opt_values = get_entries(c_set_optkeys(values), cmd, conv)
+                opt_values = get_entries(c_set_optkeys(values), cmd, c_optconv)
 
                 if type(opt_values) == CommandInterrupt:
                     return opt_values, f'${c}', False

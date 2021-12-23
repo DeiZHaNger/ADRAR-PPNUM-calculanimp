@@ -1,4 +1,4 @@
-Implémenter d'autres fonctions ~~!, fib, lr,~~ enig,...
+~~Implémenter d'autres fonctions !, fib, lr, enig,...~~
 
 ~~Implémenter la gestion du cache, interruption commande en cours...~~
 

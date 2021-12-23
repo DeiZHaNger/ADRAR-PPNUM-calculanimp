@@ -1,23 +1,110 @@
 import math
+from string import ascii_uppercase
+from typing import Union
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Enigma
+ORD_ZERO = ord('A')
+ALPHABET = ascii_uppercase
+L = len(ALPHABET)
+
+
+def set_keys_enig(args) -> list:
+    optkeys = []
+    nb_rotors = max(0, args[1])
+    optkeys.extend([f'rotor{i}' for i in range(nb_rotors)])
+    optkeys.append('message')
+
+    return optkeys
+
+
+def build_rotor_from_int(n) -> str:
+    rotor = []
+    k = L
+    alpha = list(ALPHABET)
+    while k:
+        q, n = divmod(n, factorial(k - 1))
+        rotor.append(alpha.pop(q))
+        k -= 1
+
+    return ''.join(rotor)
+
+
+def build_rotor_from_str(s) -> str:
+    rotor = dict.fromkeys([e for e in s.upper() if e in ALPHABET] + list(ALPHABET))
+    return ''.join(rotor)
+
+
+def convert_entries_enig(value) -> Union[int, str]:
+    try:
+        value = int(value) % factorial(L)
+    except ValueError:
+        if not value.isalpha():
+            print(f"Note: {value} n'a pas le format requis et sera transformé pour l'opération")
+
+    return value
+
+
+def shift_message(msg, shift, dr) -> str:
+    shifted_msg = ''
+    for i in range(len(msg)):
+        shifted_msg += chr(ORD_ZERO + (ord(msg[i]) - ORD_ZERO + dr * (shift + i)) % 26)
+    return shifted_msg
+
+
+def encode(msg, shift, rotors) -> str:
+    msg = shift_message(msg, shift, 1)
+    for rotor in rotors:
+        msg = ''.join(rotor[ord(char) - ORD_ZERO] for char in msg)
+    return msg
+
+
+def decode(msg, shift, rotors) -> str:
+    for rotor in reversed(rotors):
+        msg = ''.join(chr(ORD_ZERO + rotor.index(char)) for char in msg)
+    msg = shift_message(msg, shift, -1)
+    return msg
+
+
+def enigma(args, encrypt=True) -> str:
+    init_shift = args[0]
+
+    rotors = []
+    for e in args[2:-1]:
+        rotor = build_rotor_from_int(e) if type(e) == int else build_rotor_from_str(e)
+        rotors.append(rotor)
+        print(rotor)
+
+    message = ''.join([('?', e)[e in ALPHABET] for e in args[-1].replace(' ', '').upper()])
+
+    if encrypt:
+        return encode(message, init_shift, rotors)
+
+    return decode(message, init_shift, rotors)
+
+
+def denigma(args) -> str:
+    return enigma(args, False)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Maths
 
-
 def combination(kn) -> int:
     k = kn[0]
-    return int(arrangements(kn) / factorial([k]))
+    return int(arrangements(kn) / factorial(k))
 
 
 def arrangements(kn) -> int:
     k = kn[0]
     n = kn[1]
-    return int(factorial([n]) / factorial([n - k]))
+    return int(factorial(n) / factorial(n - k))
 
 
-def factorial(n) -> int:
+def factorial(value: Union[list, int]) -> int:
+    n = value[0] if type(value) == list else value
     p = 1
-    for i in range(n[0]):
+    for i in range(n):
         p *= i + 1
     return p
 
@@ -35,10 +122,10 @@ def gamma(arg) -> float:
     if x.is_integer():
         return factorial([int(x) - 1])
 
-    dt = 1e-2
+    dt = 1e-3
     res = 0.0
     try:
-        for i in range(1, int(1000/dt)):
+        for i in range(int(1000/dt)):
             t = i * dt
             res += math.exp(-t) * math.pow(t, x - 1) * dt
     except OverflowError:
@@ -130,7 +217,6 @@ def basketball(scored_nbs) -> int:
 # Dictonary
 
 commands = {
-
             'xv': {
                     'name': 'Score de rugby à XV',
                     'function': rugby_xv,
@@ -231,7 +317,25 @@ commands = {
                     'opt_conv': float
                 },
 
-            # not implemented 'enig': 'enigma',
+            'enig': {
+                    'name': 'Enigma',
+                    'function': enigma,
+                    'convert': int,
+                    'opt_proc': None,
+                    'arg_keys': ('shift', 'nombre de rotors'),
+                    'opt_keys': set_keys_enig,
+                    'opt_conv': convert_entries_enig
+                },
+
+            'denig': {
+                    'name': 'Enigma',
+                    'function': denigma,
+                    'convert': int,
+                    'opt_proc': None,
+                    'arg_keys': ('shift', 'nombre de rotors'),
+                    'opt_keys': set_keys_enig,
+                    'opt_conv': convert_entries_enig
+                }
             }
 
 # ----------------------------------------------------------------------------------------------------------------------
