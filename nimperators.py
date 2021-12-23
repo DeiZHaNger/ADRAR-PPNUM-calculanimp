@@ -240,8 +240,6 @@ commands = {
                 },
 
             # not implemented 'enig': 'enigma',
-            # not implemented 'cc': 'clear_cache',
-            # not implemented 'gc': 'get_from_cache',
             }
 
 # ----------------------------------------------------------------------------------------------------------------------

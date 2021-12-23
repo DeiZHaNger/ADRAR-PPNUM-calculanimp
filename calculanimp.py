@@ -4,8 +4,15 @@ import nimperators as nimp
 
 ERROR_STR_ID = '>>!!'
 
+calc_cache = []
+path = []
+
 
 class CalledHelp(Exception):
+    pass
+
+
+class ClearedCache(Exception):
     pass
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -40,12 +47,16 @@ def get_entries(to_get_list, cmd, convert=None, straight_from_input=False) -> li
                     raise NameError(msg)
                 if msg == '$h':
                     raise CalledHelp
+                if msg == '$cc':
+                    raise ClearedCache(raw)
 
                 entry = convert(raw)
                 values.append(entry)
                 break
             except CalledHelp:
                 pass
+            except ClearedCache as e:
+                print(e)
             except NameError as e:
                 print(e)
             except ValueError as e:
@@ -75,10 +86,12 @@ def process_command(cmd) -> tuple[any, str, bool]:
 
         while not values:
             values = get_entries(c_keys, cmd, c_conv)
+
             if c_set_optkeys is not None:
                 cmd.insert(0, c)
                 conv = c_optconv if c_optconv is not None else c_conv
                 values.extend(get_entries(c_set_optkeys(values), cmd, conv))
+
             if c_proc is not None:
                 retry, error = c_proc(values)
                 if retry:
@@ -126,8 +139,23 @@ def process_input(string) -> tuple[any, str, bool]:
     return rslt, cmd, to_cache
 
 # -----------------------------------------------------------------------------------------------------------------------
-# Operators Dictionary
+# Cache Functions
 
+
+def get_from_cache(*_args):
+    global calc_cache
+    if calc_cache:
+        return calc_cache.pop(-1)
+
+
+def clear_cache(*_args) -> str:
+    global calc_cache
+    del calc_cache[:]
+    return 'Cache nettoyé'
+
+
+# -----------------------------------------------------------------------------------------------------------------------
+# Operators Dictionary
 
 def display_operators_list(*_args) -> str:
     doc = '\n'
@@ -140,6 +168,24 @@ def display_operators_list(*_args) -> str:
 
 
 operators = nimp.commands
+operators['gc'] = {
+                    'name': 'Dernier élément du cache',
+                    'function': get_from_cache,
+                    'convert': None,
+                    'opt_proc': None,
+                    'arg_keys': None,
+                    'opt_keys': None,
+                    'opt_conv': None
+                    }
+operators['cc'] = {
+                    'name': 'Nettoyer le cache',
+                    'function': clear_cache,
+                    'convert': None,
+                    'opt_proc': None,
+                    'arg_keys': None,
+                    'opt_keys': None,
+                    'opt_conv': None
+                    }
 operators['\\'] = {
                     'name': 'Exit',
                     'function': sys.exit,
@@ -161,8 +207,6 @@ operators['h'] = {
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-calc_cache = []
-path = []
 print(f'Entrez directement des opérations (ex: 11.2 + 4**3)\nou $h pour voir les commandes spéciales\n')
 
 while True:
