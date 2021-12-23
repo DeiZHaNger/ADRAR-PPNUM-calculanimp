@@ -47,16 +47,8 @@ def gamma(arg) -> float:
     return round(res, 7)
 
 
-def convert_entries_lr(value) -> int:
-    converted = int(value)
-    if not 0 < converted < 1028:
-        raise ValueError(f'{value}: Cette valeur doit être comprise entre 1 et 1027')
-
-    return converted
-
-
 def set_keys_lr(args) -> list:
-    order = args[1]
+    order = max(1, args[1])
     optkeys = [f'u{i}' for i in range(order)]
     optkeys.extend([f'coef{j}' for j in range(order)])
 
@@ -64,8 +56,8 @@ def set_keys_lr(args) -> list:
 
 
 def linear_recurrence(values) -> float:
-    n = values[0]
-    order = values[1]
+    n = max(0, values[0])
+    order = max(1, values[1])
     computations = values[2:(order + 2)]
     coeffs = values[(order + 2):]
 
@@ -111,7 +103,7 @@ def convert_entries_sports(value) -> int:
 
 
 def get_score(scored, scoring_values) -> int:
-    return sum(scored[i] * scoring_values[i] for i in range(len(scored)))
+    return sum(scored[i] * scoring_values[i] for i in range(len(scoring_values)))
 
 
 def rugby_xv(scored_nbs) -> int:
@@ -232,7 +224,7 @@ commands = {
             'lr': {
                     'name': 'Récurrence linéaire',
                     'function': linear_recurrence,
-                    'convert': convert_entries_lr,
+                    'convert': int,
                     'opt_proc': None,
                     'arg_keys': ('rang', 'ordre'),
                     'opt_keys': set_keys_lr,

@@ -1,6 +1,7 @@
 import sys
 import re
 import nimperators as nimp
+from typing import Union
 
 ERROR_STR_ID = '>>!!'
 
@@ -15,6 +16,10 @@ class CalledHelp(Exception):
 class ClearedCache(Exception):
     pass
 
+
+class CommandInterrupt(Exception):
+    pass
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Functions
 
@@ -23,7 +28,7 @@ def get_error_message(msg, except_label) -> str:
     return f"{ERROR_STR_ID}{msg} {str(except_label).split(' (')[0]}"
 
 
-def get_entries(to_get_list, cmd, convert=None, straight_from_input=False) -> list:
+def get_entries(to_get_list, cmd, convert=None, straight_from_input=False) -> Union[list, CommandInterrupt]:
     global path
     path.append(cmd.pop(0))
     path_str = '>'.join(path)
@@ -43,6 +48,8 @@ def get_entries(to_get_list, cmd, convert=None, straight_from_input=False) -> li
                 else:
                     raw, msg, _ = process_input(input(f'{path_str}>{key.capitalize()}> '))
 
+                if msg == '$/':
+                    raise CommandInterrupt(raw)
                 if str(msg).find(ERROR_STR_ID) != -1:
                     raise NameError(msg)
                 if msg == '$h':
@@ -53,6 +60,9 @@ def get_entries(to_get_list, cmd, convert=None, straight_from_input=False) -> li
                 entry = convert(raw)
                 values.append(entry)
                 break
+            except CommandInterrupt as e:
+                del path[-1]
+                return e
             except CalledHelp:
                 pass
             except ClearedCache as e:
@@ -87,10 +97,18 @@ def process_command(cmd) -> tuple[any, str, bool]:
         while not values:
             values = get_entries(c_keys, cmd, c_conv)
 
+            if type(values) == CommandInterrupt:
+                return values, f'${c}', False
+
             if c_set_optkeys is not None:
                 cmd.insert(0, c)
                 conv = c_optconv if c_optconv is not None else c_conv
-                values.extend(get_entries(c_set_optkeys(values), cmd, conv))
+                opt_values = get_entries(c_set_optkeys(values), cmd, conv)
+
+                if type(opt_values) == CommandInterrupt:
+                    return opt_values, f'${c}', False
+
+                values.extend(opt_values)
 
             if c_proc is not None:
                 retry, error = c_proc(values)
@@ -138,6 +156,10 @@ def process_input(string) -> tuple[any, str, bool]:
 
     return rslt, cmd, to_cache
 
+
+def call_command_break(*_args) -> str:
+    return 'Commande interrompue'
+
 # -----------------------------------------------------------------------------------------------------------------------
 # Cache Functions
 
@@ -168,6 +190,15 @@ def display_operators_list(*_args) -> str:
 
 
 operators = nimp.commands
+operators['/'] = {
+                    'name': 'Interruption',
+                    'function': call_command_break,
+                    'convert': None,
+                    'opt_proc': None,
+                    'arg_keys': None,
+                    'opt_keys': None,
+                    'opt_conv': None
+                    }
 operators['gc'] = {
                     'name': 'Dernier élément du cache',
                     'function': get_from_cache,
