@@ -66,13 +66,9 @@ def get_entries(to_get_list, cmd, convert=None, straight_from_input=False) -> Un
                 return e
             except CalledHelp:
                 pass
-            except ClearedCache as e:
+            except (ClearedCache, NameError) as e:
                 print(e)
-            except NameError as e:
-                print(e)
-            except ValueError as e:
-                print(get_error_message('Warning:', e))
-            except TypeError as e:
+            except (ValueError, TypeError, OverflowError) as e:
                 print(get_error_message('Warning:', e))
 
     del path[-1]
@@ -137,16 +133,10 @@ def process_input(string) -> tuple[any, str, bool]:
         to_cache = False
 
         try:
-            rslt = float(eval(string))
+            rslt = nimp.int32d(eval(string))
             to_cache = True
 
-        except SyntaxError as e:
-            cmd += get_error_message(' Warning:', e)
-        except ZeroDivisionError as e:
-            cmd += get_error_message(' Warning:', e)
-        except TypeError as e:
-            cmd += get_error_message(' Warning:', e)
-        except NameError as e:
+        except (SyntaxError, SyntaxWarning, ZeroDivisionError, TypeError, NameError) as e:
             cmd += get_error_message(' Warning:', e)
 
     else:

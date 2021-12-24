@@ -2,6 +2,23 @@ import math
 from string import ascii_uppercase
 from typing import Union
 
+
+def int32d(value) -> Union[int, float]:
+    str_v = str(value)
+    l_v = len(str_v)
+    is_int, l_v = (str_v[1:].isdigit(), l_v - 1) if str_v[0] in ('+', '-') else (str_v.isdigit(), l_v)
+
+    if is_int and l_v < 33:
+        return int(value)
+
+    try:
+        converted = float(value)
+    except OverflowError:
+        converted = math.inf
+
+    return converted
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Enigma
 ORD_ZERO = ord('A')
@@ -75,7 +92,7 @@ def enigma(args, encrypt=True) -> str:
         rotors.append(rotor)
         print(rotor)
 
-    message = ''.join([('?', e)[e in ALPHABET] for e in args[-1].replace(' ', '').upper()])
+    message = ''.join([('?', e)[e in ALPHABET] for e in str(args[-1]).replace(' ', '').upper()])
 
     if encrypt:
         return encode(message, init_shift, rotors)
@@ -90,63 +107,71 @@ def denigma(args) -> str:
 # ----------------------------------------------------------------------------------------------------------------------
 # Maths
 
-def combination(kn) -> int:
-    k = kn[0]
-    return int(arrangements(kn) / factorial(k))
+def combination(kn) -> Union[int, float]:
+    n = kn[1]
+    k = min(kn[0], n - kn[0])
+    arrg_kn = factorial(n, n - k, True)
+    if arrg_kn == 0 or arrg_kn is math.nan:
+        res = arrg_kn
+    else:
+        res = math.inf if k > 514 else arrg_kn // factorial(k, comb=True)
+    return int32d(res)
 
 
-def arrangements(kn) -> int:
+def arrangements(kn) -> Union[int, float]:
     k = kn[0]
     n = kn[1]
-    return int(factorial(n) / factorial(n - k))
+    return factorial(n, n - k)
 
 
-def factorial(value: Union[list, int]) -> int:
+def factorial(value: Union[list, int], base=0, comb=False) -> Union[int, float]:
     n = value[0] if type(value) == list else value
+
+    if n < 0:
+        return math.nan
+
+    if not 0 <= base <= n:
+        return 0
+
+    if not comb and n - base > 170:
+        return math.inf
+
     p = 1
-    for i in range(n):
-        p *= i + 1
-    return p
+    for i in range(n - base):
+        p *= i + base + 1
 
-
-def convert_entries_gam(value) -> float:
-    converted = float(value)
-    if converted < 1:
-        raise ValueError(f'{value}: Le calcul est trop imprécis pour valeur < 1')
-
-    return converted
+    return p if comb else int32d(p)
 
 
 def gamma(arg) -> float:
     x = arg[0]
-    if x.is_integer():
-        return factorial([int(x) - 1])
 
-    dt = 1e-3
-    res = 0.0
     try:
-        for i in range(int(1000/dt)):
-            t = i * dt
-            res += math.exp(-t) * math.pow(t, x - 1) * dt
+        res = math.gamma(x)
     except OverflowError:
-        return math.inf
+        res = math.inf if x > 0 else math.inf * math.pow(-1, 1 + math.ceil(x) % 2)
+    except ValueError:
+        res = math.nan
 
-    return round(res, 7)
+    return res
 
 
 def set_keys_lr(args) -> list:
-    order = max(1, args[1])
+    order = max(1, min(args[1], 10000))
     optkeys = [f'u{i}' for i in range(order)]
     optkeys.extend([f'coef{j}' for j in range(order)])
 
     return optkeys
 
 
-def linear_recurrence(values) -> float:
+def linear_recurrence(values) -> Union[int, float]:
     n = max(0, values[0])
     order = max(1, values[1])
     computations = values[2:(order + 2)]
     coeffs = values[(order + 2):]
+
+    if n > 1e+6 or n * order > 1e+7:
+        return math.nan
 
     if n < order:
         return computations[n]
@@ -155,10 +180,10 @@ def linear_recurrence(values) -> float:
         computations.append(sum(computations[i] * coeffs[i] for i in range(order)))
         del computations[0]
 
-    return computations[-1]
+    return int32d(computations[-1])
 
 
-def fibonacci(n) -> float:
+def fibonacci(n) -> Union[int, float]:
     r = max(0, n[0])
     return linear_recurrence([r, 2, 1.0, 1.0, 1.0, 1.0])
 
@@ -270,7 +295,7 @@ commands = {
             'gam': {
                     'name': 'Fonction Gamma',
                     'function': gamma,
-                    'convert': convert_entries_gam,
+                    'convert': int32d,
                     'opt_proc': None,
                     'arg_keys': ('nombre réel >= 1 ',),
                     'opt_keys': None,
@@ -314,7 +339,7 @@ commands = {
                     'opt_proc': None,
                     'arg_keys': ('rang', 'ordre'),
                     'opt_keys': set_keys_lr,
-                    'opt_conv': float
+                    'opt_conv': int32d
                 },
 
             'enig': {
@@ -335,7 +360,7 @@ commands = {
                     'arg_keys': ('shift', 'nombre de rotors'),
                     'opt_keys': set_keys_enig,
                     'opt_conv': convert_entries_enig
-                }
+                },
             }
 
 # ----------------------------------------------------------------------------------------------------------------------
