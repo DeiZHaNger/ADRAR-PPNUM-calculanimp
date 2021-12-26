@@ -4,17 +4,20 @@ from typing import Union
 
 
 def int32d(value) -> Union[int, float]:
-    str_v = str(value)
-    l_v = len(str_v)
-    is_int, l_v = (str_v[1:].isdigit(), l_v - 1) if str_v[0] in ('+', '-') else (str_v.isdigit(), l_v)
-
-    if is_int and l_v < 33:
-        return int(value)
-
     try:
         converted = float(value)
+        str_abs_v = str(value).lstrip('-')
+        if 'e+' in str_abs_v:
+            l_int_v = int(str_abs_v.split('+')[-1])
+        else:
+            str_int_abs_v = str_abs_v.split('.')[0]
+            l_int_v = len(str_int_abs_v)
+
+        if converted.is_integer() and l_int_v < 33:
+            return int(value)
+
     except OverflowError:
-        converted = math.inf
+        converted = math.copysign(math.inf, int(str(value)[:2]))
 
     return converted
 
@@ -107,20 +110,59 @@ def denigma(args) -> str:
 # ----------------------------------------------------------------------------------------------------------------------
 # Maths
 
+def add(xy) -> Union[int, float]:
+    return int32d(sum(xy))
+
+
+def sub(xy) -> Union[int, float]:
+    x, y = xy
+    return int32d(x - y)
+
+
+def multi(xy) -> Union[int, float]:
+    return int32d(math.prod(xy))
+
+
+def div(xy) -> Union[int, float]:
+    x, y = xy
+    return x * math.inf if y == 0 else int32d(x / y)
+
+
+def div_euc(xy) -> Union[int, float]:
+    x, y = xy
+    return x * math.inf if y == 0 else int32d(x // y)
+
+
+def modulo(xy) -> Union[int, float]:
+    x, y = xy
+    return 0 if y == 0 else int32d(x % y)
+
+
+def power(xy) -> Union[int, float]:
+    x, y = xy
+    try:
+        res = int32d(math.pow(x, y))
+    except ValueError:
+        res = math.nan
+    except OverflowError:
+        res = math.inf if x > 0 else math.inf * math.pow(-1, int(str(y)[-1]) % 2)
+
+    return res
+
+
 def combination(kn) -> Union[int, float]:
     n = kn[1]
     k = min(kn[0], n - kn[0])
     arrg_kn = factorial(n, n - k, True)
-    if arrg_kn == 0 or arrg_kn is math.nan:
+    if arrg_kn in (0, math.nan, math.inf):
         res = arrg_kn
     else:
-        res = math.inf if k > 514 else arrg_kn // factorial(k, comb=True)
+        res = arrg_kn // factorial(k, comb=True)
     return int32d(res)
 
 
 def arrangements(kn) -> Union[int, float]:
-    k = kn[0]
-    n = kn[1]
+    k, n = kn
     return factorial(n, n - k)
 
 
@@ -133,12 +175,12 @@ def factorial(value: Union[list, int], base=0, comb=False) -> Union[int, float]:
     if not 0 <= base <= n:
         return 0
 
-    if not comb and n - base > 170:
+    if (not comb and n - base > 170) or n - base > 514:
         return math.inf
 
     p = 1
     for i in range(n - base):
-        p *= i + base + 1
+        p *= base + i + 1
 
     return p if comb else int32d(p)
 
@@ -170,7 +212,7 @@ def linear_recurrence(values) -> Union[int, float]:
     computations = values[2:(order + 2)]
     coeffs = values[(order + 2):]
 
-    if n > 1e+6 or n * order > 1e+7:
+    if n > 1e+5 or n * order > 1e+6:
         return math.nan
 
     if n < order:
@@ -185,7 +227,7 @@ def linear_recurrence(values) -> Union[int, float]:
 
 def fibonacci(n) -> Union[int, float]:
     r = max(0, n[0])
-    return linear_recurrence([r, 2, 1.0, 1.0, 1.0, 1.0])
+    return linear_recurrence([r, 2, 1, 1, 1, 1])
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -242,6 +284,76 @@ def basketball(scored_nbs) -> int:
 # Dictonary
 
 commands = {
+            '+': {
+                    'name': 'Addition',
+                    'function': add,
+                    'convert': int32d,
+                    'opt_proc': None,
+                    'arg_keys': ('1er terme', '2nd terme'),
+                    'opt_keys': None,
+                    'opt_conv': None
+                },
+
+            '-': {
+                    'name': 'Soustraction',
+                    'function': sub,
+                    'convert': int32d,
+                    'opt_proc': None,
+                    'arg_keys': ('diminuende', 'diminuteur'),
+                    'opt_keys': None,
+                    'opt_conv': None
+                },
+
+            '*': {
+                    'name': 'Multiplication',
+                    'function': multi,
+                    'convert': int32d,
+                    'opt_proc': None,
+                    'arg_keys': ('1er terme', '2nd terme'),
+                    'opt_keys': None,
+                    'opt_conv': None
+                },
+
+            '/': {
+                    'name': 'Division',
+                    'function': div,
+                    'convert': int32d,
+                    'opt_proc': None,
+                    'arg_keys': ('numérateur', 'dénominateur'),
+                    'opt_keys': None,
+                    'opt_conv': None
+                },
+
+            '//': {
+                    'name': 'Division Euclidienne',
+                    'function': div_euc,
+                    'convert': int32d,
+                    'opt_proc': None,
+                    'arg_keys': ('numérateur', 'dénominateur'),
+                    'opt_keys': None,
+                    'opt_conv': None
+                },
+
+            '%': {
+                    'name': 'Modulo',
+                    'function': modulo,
+                    'convert': int32d,
+                    'opt_proc': None,
+                    'arg_keys': ('numérateur', 'dénominateur'),
+                    'opt_keys': None,
+                    'opt_conv': None
+                },
+
+            '**': {
+                    'name': 'Puissance',
+                    'function': power,
+                    'convert': int32d,
+                    'opt_proc': None,
+                    'arg_keys': ('base', 'exposant'),
+                    'opt_keys': None,
+                    'opt_conv': None
+                },
+
             'xv': {
                     'name': 'Score de rugby à XV',
                     'function': rugby_xv,
@@ -297,7 +409,7 @@ commands = {
                     'function': gamma,
                     'convert': int32d,
                     'opt_proc': None,
-                    'arg_keys': ('nombre réel >= 1 ',),
+                    'arg_keys': ('nombre réel',),
                     'opt_keys': None,
                     'opt_conv': None
                 },

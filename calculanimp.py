@@ -3,7 +3,6 @@ import re
 from typing import Union
 import nimperators as nimp
 
-
 ERROR_STR_ID = '>>!!'
 
 calc_cache = []
@@ -49,7 +48,7 @@ def get_entries(to_get_list, cmd, convert=None, straight_from_input=False) -> Un
                 else:
                     raw, msg, _ = process_input(input(f'{path_str}>{key.capitalize()}> '))
 
-                if msg == '$/':
+                if msg == '$_':
                     raise CommandInterrupt(raw)
                 if str(msg).find(ERROR_STR_ID) != -1:
                     raise NameError(msg)
@@ -57,6 +56,8 @@ def get_entries(to_get_list, cmd, convert=None, straight_from_input=False) -> Un
                     raise CalledHelp
                 if msg == '$cc':
                     raise ClearedCache(raw)
+                if isinstance(raw, CommandInterrupt):
+                    raise TypeError(raw)
 
                 entry = convert(raw)
                 values.append(entry)
@@ -136,7 +137,7 @@ def process_input(string) -> tuple[any, str, bool]:
             rslt = nimp.int32d(eval(string))
             to_cache = True
 
-        except (SyntaxError, SyntaxWarning, ZeroDivisionError, TypeError, NameError) as e:
+        except (SyntaxError, SyntaxWarning, ZeroDivisionError,  OverflowError, TypeError, NameError) as e:
             cmd += get_error_message(' Warning:', e)
 
     else:
@@ -180,7 +181,7 @@ def display_operators_list(*_args) -> str:
 
 
 operators = nimp.commands
-operators['/'] = {
+operators['_'] = {
                     'name': 'Interruption',
                     'function': call_command_break,
                     'convert': None,
