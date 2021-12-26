@@ -78,7 +78,7 @@ def get_entries(to_get_list, cmd, convert=None, straight_from_input=False) -> Un
 
 
 def process_command(cmd) -> tuple[any, str, bool]:
-    c = cmd[0]
+    c = cmd[0] if cmd else ''
     if c not in operators.keys():
         return None, get_error_message(f'${c}', 'Commande non valide'), False
 
@@ -134,7 +134,7 @@ def process_input(string) -> tuple[any, str, bool]:
         to_cache = False
 
         try:
-            rslt = nimp.int32d(eval(string))
+            rslt = nimp.flint32d(eval(string))
             to_cache = True
 
         except (SyntaxError, SyntaxWarning, ZeroDivisionError,  OverflowError, TypeError, NameError) as e:

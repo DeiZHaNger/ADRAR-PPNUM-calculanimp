@@ -3,18 +3,16 @@ from string import ascii_uppercase
 from typing import Union
 
 
-def int32d(value) -> Union[int, float]:
+def flint32d(value) -> Union[int, float]:
     try:
         converted = float(value)
         str_abs_v = str(value).lstrip('-')
-        if 'e+' in str_abs_v:
-            l_int_v = int(str_abs_v.split('+')[-1])
-        else:
+        if 'e' not in str_abs_v:
             str_int_abs_v = str_abs_v.split('.')[0]
             l_int_v = len(str_int_abs_v)
 
-        if converted.is_integer() and l_int_v < 33:
-            return int(value)
+            if converted.is_integer() and l_int_v < 33:
+                return int(value)
 
     except OverflowError:
         converted = math.copysign(math.inf, int(str(value)[:2]))
@@ -31,7 +29,7 @@ L = len(ALPHABET)
 
 def set_keys_enig(args) -> list:
     optkeys = []
-    nb_rotors = max(0, args[1])
+    nb_rotors = max(0, min(args[1], 10000))
     optkeys.extend([f'rotor{i}' for i in range(nb_rotors)])
     optkeys.append('message')
 
@@ -111,37 +109,37 @@ def denigma(args) -> str:
 # Maths
 
 def add(xy) -> Union[int, float]:
-    return int32d(sum(xy))
+    return flint32d(sum(xy))
 
 
 def sub(xy) -> Union[int, float]:
     x, y = xy
-    return int32d(x - y)
+    return flint32d(x - y)
 
 
 def multi(xy) -> Union[int, float]:
-    return int32d(math.prod(xy))
+    return flint32d(math.prod(xy))
 
 
 def div(xy) -> Union[int, float]:
     x, y = xy
-    return x * math.inf if y == 0 else int32d(x / y)
+    return x * math.inf if y == 0 else flint32d(x / y)
 
 
 def div_euc(xy) -> Union[int, float]:
     x, y = xy
-    return x * math.inf if y == 0 else int32d(x // y)
+    return x * math.inf if y == 0 else flint32d(x // y)
 
 
 def modulo(xy) -> Union[int, float]:
     x, y = xy
-    return 0 if y == 0 else int32d(x % y)
+    return 0 if y == 0 else flint32d(x % y)
 
 
 def power(xy) -> Union[int, float]:
     x, y = xy
     try:
-        res = int32d(math.pow(x, y))
+        res = flint32d(math.pow(x, y))
     except ValueError:
         res = math.nan
     except OverflowError:
@@ -158,7 +156,7 @@ def combination(kn) -> Union[int, float]:
         res = arrg_kn
     else:
         res = arrg_kn // factorial(k, comb=True)
-    return int32d(res)
+    return flint32d(res)
 
 
 def arrangements(kn) -> Union[int, float]:
@@ -182,10 +180,10 @@ def factorial(value: Union[list, int], base=0, comb=False) -> Union[int, float]:
     for i in range(n - base):
         p *= base + i + 1
 
-    return p if comb else int32d(p)
+    return p if comb else flint32d(p)
 
 
-def gamma(arg) -> float:
+def gamma(arg) -> Union[int, float]:
     x = arg[0]
 
     try:
@@ -195,7 +193,7 @@ def gamma(arg) -> float:
     except ValueError:
         res = math.nan
 
-    return res
+    return flint32d(res)
 
 
 def set_keys_lr(args) -> list:
@@ -222,7 +220,7 @@ def linear_recurrence(values) -> Union[int, float]:
         computations.append(sum(computations[i] * coeffs[i] for i in range(order)))
         del computations[0]
 
-    return int32d(computations[-1])
+    return flint32d(computations[-1])
 
 
 def fibonacci(n) -> Union[int, float]:
@@ -287,7 +285,7 @@ commands = {
             '+': {
                     'name': 'Addition',
                     'function': add,
-                    'convert': int32d,
+                    'convert': flint32d,
                     'opt_proc': None,
                     'arg_keys': ('1er terme', '2nd terme'),
                     'opt_keys': None,
@@ -297,7 +295,7 @@ commands = {
             '-': {
                     'name': 'Soustraction',
                     'function': sub,
-                    'convert': int32d,
+                    'convert': flint32d,
                     'opt_proc': None,
                     'arg_keys': ('diminuende', 'diminuteur'),
                     'opt_keys': None,
@@ -307,7 +305,7 @@ commands = {
             '*': {
                     'name': 'Multiplication',
                     'function': multi,
-                    'convert': int32d,
+                    'convert': flint32d,
                     'opt_proc': None,
                     'arg_keys': ('1er terme', '2nd terme'),
                     'opt_keys': None,
@@ -317,7 +315,7 @@ commands = {
             '/': {
                     'name': 'Division',
                     'function': div,
-                    'convert': int32d,
+                    'convert': flint32d,
                     'opt_proc': None,
                     'arg_keys': ('numérateur', 'dénominateur'),
                     'opt_keys': None,
@@ -327,7 +325,7 @@ commands = {
             '//': {
                     'name': 'Division Euclidienne',
                     'function': div_euc,
-                    'convert': int32d,
+                    'convert': flint32d,
                     'opt_proc': None,
                     'arg_keys': ('numérateur', 'dénominateur'),
                     'opt_keys': None,
@@ -337,7 +335,7 @@ commands = {
             '%': {
                     'name': 'Modulo',
                     'function': modulo,
-                    'convert': int32d,
+                    'convert': flint32d,
                     'opt_proc': None,
                     'arg_keys': ('numérateur', 'dénominateur'),
                     'opt_keys': None,
@@ -347,7 +345,7 @@ commands = {
             '**': {
                     'name': 'Puissance',
                     'function': power,
-                    'convert': int32d,
+                    'convert': flint32d,
                     'opt_proc': None,
                     'arg_keys': ('base', 'exposant'),
                     'opt_keys': None,
@@ -407,7 +405,7 @@ commands = {
             'gam': {
                     'name': 'Fonction Gamma',
                     'function': gamma,
-                    'convert': int32d,
+                    'convert': flint32d,
                     'opt_proc': None,
                     'arg_keys': ('nombre réel',),
                     'opt_keys': None,
@@ -451,7 +449,7 @@ commands = {
                     'opt_proc': None,
                     'arg_keys': ('rang', 'ordre'),
                     'opt_keys': set_keys_lr,
-                    'opt_conv': int32d
+                    'opt_conv': flint32d
                 },
 
             'enig': {

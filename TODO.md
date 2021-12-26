@@ -2,4 +2,4 @@
 
 ~~Implémenter la gestion du cache, interruption commande en cours...~~
 
-~~Revoir la gestion des grands nombres et limitations~~ (reste à revoir pour enigma)
+~~Revoir la gestion des grands nombres et limitations (reste à revoir pour enigma)~~
